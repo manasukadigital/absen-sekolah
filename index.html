@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Absensi Siswa</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (CDN) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Config for Font -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles for smooth animations */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Toast Transitions */
+        .toast {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-[#f0f4f8] text-[#1a202c] min-h-screen flex items-center justify-center p-4">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <div class="max-w-md w-full bg-white rounded-[1rem] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] overflow-hidden">
+        
+        <!-- Header Section -->
+        <div class="bg-[#1e40af] p-6 text-white text-center relative overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            
+            <div class="relative z-10 flex flex-col items-center">
+                <div class="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                    <i class="fa-solid fa-graduation-cap text-3xl"></i>
+                </div>
+                <h1 class="text-[1.25rem] font-bold tracking-tight">Portal Absensi</h1>
+                <p class="text-blue-100 text-sm mt-1">SMK Negeri 1 Nusantara</p>
+                
+                <div class="mt-4 flex flex-col items-center bg-[#eff6ff] text-[#1e3a8a] px-5 py-3 rounded-[0.75rem] border border-blue-100">
+                    <div class="flex items-center text-xs font-bold uppercase text-[#718096] mb-1">
+                        <i class="fa-regular fa-clock mr-1"></i> Waktu Saat Ini
+                    </div>
+                    <span id="realtime-clock" class="text-xl font-bold font-mono tracking-wide">00:00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="p-6 sm:p-8">
+            <!-- Simulation Banner -->
+            <div id="simulation-banner" class="hidden mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-[1rem] p-4 flex items-start">
+                <i class="fa-solid fa-flask text-amber-500 mt-1 mr-3"></i>
+                <div class="flex-1">
+                    <h3 class="text-sm font-semibold">Mode Simulasi Aktif</h3>
+                    <p class="text-xs text-amber-700 mt-1 mb-2">Aplikasi sedang dalam mode preview. Data tidak dikirim ke server asli.</p>
+                    <button type="button" onclick="fillDummyData()" class="w-full text-[0.875rem] bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] py-[0.875rem] rounded-[0.5rem] mt-2 transition-colors font-semibold">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Isi Data Simulasi
+                    </button>
+                </div>
+            </div>
+
+            <form id="attendance-form">
+                
+                <!-- Kelas Select -->
+                <div class="mb-5">
+                    <label for="kelas" class="block text-[0.75rem] font-bold uppercase text-[#718096] mb-2">Kelas <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-chalkboard-user text-slate-400"></i>
+                        </div>
+                        <select id="kelas" name="kelas" required 
+                            class="w-full pl-10 pr-10 py-[0.75rem] rounded-[0.5rem] border border-[#e2e8f0] focus:border-[#3b82f6] focus:ring-[3px] focus:ring-blue-500/10 outline-none transition-all text-[1rem] bg-white appearance-none">
+                            <option value="" disabled selected>Pilih kelas Anda</option>
+                            <option value="X PPLG">X PPLG</option>
+                            <option value="XI PPLG">XI PPLG</option>
+                            <option value="XII PPLG">XII PPLG</option>
+                            <option value="X TKJ">X TKJ</option>
+                            <option value="XI TKJ">XI TKJ</option>
+                            <option value="XII TKJ">XII TKJ</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-chevron-down text-slate-400 text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nama Lengkap Select -->
+                <div class="mb-5">
+                    <label for="nama" class="block text-[0.75rem] font-bold uppercase text-[#718096] mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-user text-slate-400"></i>
+                        </div>
+                        <select id="nama" name="nama" required disabled
+                            class="w-full pl-10 pr-10 py-[0.75rem] rounded-[0.5rem] border border-[#e2e8f0] focus:border-[#3b82f6] focus:ring-[3px] focus:ring-blue-500/10 outline-none transition-all text-[1rem] bg-[#f8fafc] disabled:opacity-75 appearance-none">
+                            <option value="" disabled selected>Pilih kelas terlebih dahulu</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-chevron-down text-slate-400 text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NIS input (Auto) -->
+                <div class="mb-5">
+                    <label for="nis" class="block text-[0.75rem] font-bold uppercase text-[#718096] mb-2">Nomor Induk Siswa (Auto)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-id-card text-slate-400"></i>
+                        </div>
+                        <input type="number" id="nis" name="nis" required readonly placeholder="Otomatis terisi" 
+                            class="w-full pl-10 pr-4 py-[0.75rem] rounded-[0.5rem] border border-[#e2e8f0] focus:border-[#3b82f6] focus:ring-[3px] focus:ring-blue-500/10 outline-none transition-all text-[1rem] bg-[#f8fafc] placeholder-slate-400 cursor-not-allowed text-[#64748b] font-medium">
+                    </div>
+                </div>
+
+                <!-- Tipe Absensi Radios -->
+                <div class="mb-5">
+                    <label class="block text-[0.75rem] font-bold uppercase text-[#718096] mb-2">Tipe Absensi <span class="text-red-500">*</span></label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="tipe" value="Masuk" required class="peer sr-only">
+                            <div class="flex items-center justify-center p-[0.75rem] rounded-[0.5rem] border border-[#e2e8f0] bg-white hover:bg-gray-50 peer-checked:bg-[#dcfce7] peer-checked:border-[#22c55e] peer-checked:text-[#166534] transition-all font-semibold">
+                                <i class="fa-solid fa-right-to-bracket mr-2 radio-icon peer-checked:text-[#166534] transition-colors"></i> Masuk
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="tipe" value="Keluar" required class="peer sr-only">
+                            <div class="flex items-center justify-center p-[0.75rem] rounded-[0.5rem] border border-[#e2e8f0] bg-[#f8fafc] hover:bg-gray-50 peer-checked:bg-[#fee2e2] peer-checked:border-[#ef4444] peer-checked:text-[#991b1b] transition-all font-semibold text-[#64748b]">
+                                <i class="fa-solid fa-right-from-bracket mr-2 radio-icon peer-checked:text-[#991b1b] transition-colors"></i> Keluar
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submit-btn" class="w-full mt-4 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold py-[0.875rem] px-4 rounded-[0.5rem] transition-all flex items-center justify-center gap-2">
+                    <span id="btn-text">Kirim Absensi</span>
+                    <i id="btn-icon" class="fa-solid fa-paper-plane"></i>
+                    <div id="btn-spinner" class="spinner hidden"></div>
+                </button>
+            </form>
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-slate-50 border-t border-slate-100 p-4 text-center">
+            <p class="text-xs text-slate-400 font-medium">&copy; <span id="current-year"></span> Sistem Digitalisasi Sekolah</p>
+        </div>
+    </div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        // ==========================================
+        // 1. PENGATURAN APLIKASI (KONFIGURASI UTAMA)
+        // ==========================================
+        const IS_PREVIEW = false; // Set false jika akan dipakai secara production
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzbVwQq3Uwb0z9xXEHXqxMcRc5JOEQniMhGEKCaX6Z3mHssfMbOJ_XMipn4wMSCsiQq/exec";
+
+        // ==========================================
+        // DATA SISWA (SIMULASI/DUMMY)
+        // ==========================================
+        const dataSiswa = {
+            "X PPLG": [
+                { nama: "Ahmad Budi", nis: "10101" },
+                { nama: "Citra Lestari", nis: "10102" },
+                { nama: "Deni Saputra", nis: "10103" }
+            ],
+            "XI PPLG": [
+                { nama: "Eka Putri", nis: "11101" },
+                { nama: "Fajar Nugroho", nis: "11102" },
+                { nama: "Gita Savitri", nis: "11103" }
+            ],
+            "XII PPLG": [
+                { nama: "Hadi Pratama", nis: "12101" },
+                { nama: "Ika Sari", nis: "12102" },
+                { nama: "Joko Susilo", nis: "12103" }
+            ],
+            "X TKJ": [
+                { nama: "Kiki Amalia", nis: "10201" },
+                { nama: "Lukman Hakim", nis: "10202" },
+                { nama: "Mira Lesmana", nis: "10203" }
+            ],
+            "XI TKJ": [
+                { nama: "Nina Zatulini", nis: "11201" },
+                { nama: "Oki Setiana", nis: "11202" },
+                { nama: "Putra Siregar", nis: "11203" }
+            ],
+            "XII TKJ": [
+                { nama: "Qori Amelia", nis: "12201" },
+                { nama: "Rizky Billar", nis: "12202" },
+                { nama: "Siska Kohl", nis: "12203" }
+            ]
+        };
+
+        // ==========================================
+        // 2. INISIALISASI UI
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tampilkan banner simulasi jika di mode preview
+            if (IS_PREVIEW) {
+                document.getElementById('simulation-banner').classList.remove('hidden');
+            }
+            
+            // Set tahun copyright
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
+            // Update jam real-time
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Setup cascading dropdown
+            const classSelect = document.getElementById('kelas');
+            const nameSelect = document.getElementById('nama');
+            const nisInput = document.getElementById('nis');
+
+            classSelect.addEventListener('change', function() {
+                const selectedClass = this.value;
+                const students = dataSiswa[selectedClass] || [];
+                
+                // Reset states
+                nameSelect.innerHTML = '<option value="" disabled selected>Pilih nama Anda</option>';
+                nameSelect.disabled = students.length === 0;
+                nameSelect.classList.toggle('bg-[#f8fafc]', students.length === 0);
+                nameSelect.classList.toggle('bg-white', students.length > 0);
+                nisInput.value = '';
+
+                // Populate students
+                students.forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student.nama;
+                    option.textContent = student.nama;
+                    option.dataset.nis = student.nis; // Simpan NIS di dataset option
+                    nameSelect.appendChild(option);
+                });
+            });
+
+            nameSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption && selectedOption.dataset.nis) {
+                    nisInput.value = selectedOption.dataset.nis;
+                } else {
+                    nisInput.value = '';
+                }
+            });
+        });
+
+        // ==========================================
+        // 3. FUNGSI JAM REAL-TIME
+        // ==========================================
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('realtime-clock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // ==========================================
+        // 4. FUNGSI ISI DATA OTOMATIS (MODE SIMULASI)
+        // ==========================================
+        function fillDummyData() {
+            const classes = Object.keys(dataSiswa);
+            const randomClass = classes[Math.floor(Math.random() * classes.length)];
+            const studentsInClass = dataSiswa[randomClass];
+            const randomStudent = studentsInClass[Math.floor(Math.random() * studentsInClass.length)];
+            const types = ["Masuk", "Keluar"];
+            
+            // Set Kelas
+            const classSelect = document.getElementById('kelas');
+            classSelect.value = randomClass;
+            // Trigger change event to populate names
+            classSelect.dispatchEvent(new Event('change'));
+            
+            // Set Nama
+            const nameSelect = document.getElementById('nama');
+            nameSelect.value = randomStudent.nama;
+            // Trigger change event to populate NIS
+            nameSelect.dispatchEvent(new Event('change'));
+            
+            // Set Tipe
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            const radio = document.querySelector(`input[name="tipe"][value="${randomType}"]`);
+            if (radio) radio.checked = true;
+            
+            showToast('info', 'Data simulasi berhasil diisi!');
+        }
+
+        // ==========================================
+        // 5. SISTEM NOTIFIKASI TOAST
+        // ==========================================
+        function showToast(type, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Tentukan gaya berdasarkan tipe
+            let bgColor, iconClass;
+            if (type === 'success') {
+                bgColor = 'bg-green-50 text-green-800 border-green-200';
+                iconClass = 'fa-solid fa-circle-check text-green-500';
+            } else if (type === 'error') {
+                bgColor = 'bg-red-50 text-red-800 border-red-200';
+                iconClass = 'fa-solid fa-circle-exclamation text-red-500';
+            } else {
+                bgColor = 'bg-blue-50 text-blue-800 border-blue-200';
+                iconClass = 'fa-solid fa-circle-info text-blue-500';
+            }
+
+            toast.className = `toast flex items-center p-4 mb-2 border rounded-2xl shadow-lg ${bgColor}`;
+            toast.innerHTML = `
+                <i class="${iconClass} text-xl mr-3"></i>
+                <div class="font-medium text-sm">${message}</div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animasi masuk
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Animasi keluar dan hapus elemen
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ==========================================
+        // 6. PENANGANAN PENGIRIMAN FORM (FETCH API)
+        // ==========================================
+        document.getElementById('attendance-form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Mencegah reload halaman
+            
+            // 1. Ambil data dari form
+            const formData = new FormData(this);
+            const dataObj = Object.fromEntries(formData.entries());
+            
+            // 2. Client-side validation (extra safety)
+            if (!dataObj.nis || !dataObj.nama || !dataObj.kelas || !dataObj.tipe) {
+                showToast('error', 'Mohon lengkapi semua bidang yang wajib (tanda bintang merah).');
+                return;
+            }
+
+            // 3. Ubah status tombol jadi state Loading
+            const btn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+            const btnSpinner = document.getElementById('btn-spinner');
+            
+            btn.disabled = true;
+            btn.classList.replace('bg-[#2563eb]', 'bg-blue-400');
+            btnText.textContent = 'Memproses...';
+            btnIcon.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+
+            // 4. Logika Pengiriman
+            if (IS_PREVIEW) {
+                // Skenario PREVIEW MODE (Simulasi sukses tanpa kirim data sungguhan)
+                setTimeout(() => {
+                    resetFormState(btn, btnText, btnIcon, btnSpinner);
+                    showToast('success', `Berhasil! Absensi ${dataObj.tipe} atas nama ${dataObj.nama} (Simulasi).`);
+                    this.reset();
+                }, 1500);
+                return;
+            }
+
+            // Skenario PRODUCTION MODE (Fetch ke Google Apps Script)
+            fetch(GAS_URL, {
+                method: 'POST',
+                // Mode no-cors wajib jika halaman disimpan berbeda domain dengan G-Script
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataObj)
+            })
+            .then(response => {
+                // Karena no-cors, kita tidak bisa membaca response.ok yang sebenarnya
+                // Asumsi jika promise resolved berarti jaringan sukses mengirim request
+                resetFormState(btn, btnText, btnIcon, btnSpinner);
+                showToast('success', `Sukses! Absensi ${dataObj.tipe} berhasil dicatat.`);
+                this.reset();
+            })
+            .catch(error => {
+                console.error('Error submitting form:', error);
+                resetFormState(btn, btnText, btnIcon, btnSpinner);
+                showToast('error', `Gagal mengirim data! Periksa koneksi internet Anda.`);
+            });
+        });
+
+        // ==========================================
+        // 7. HELPER: KEMBALIKAN TOMBOL KE AWAL
+        // ==========================================
+        function resetFormState(btn, btnText, btnIcon, btnSpinner) {
+            btn.disabled = false;
+            btn.classList.replace('bg-blue-400', 'bg-[#2563eb]');
+            btnText.textContent = 'Kirim Absensi';
+            btnIcon.classList.remove('hidden');
+            btnSpinner.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

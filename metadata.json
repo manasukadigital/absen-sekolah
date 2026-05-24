@@ -1,0 +1,8 @@
+{
+  "name": "Portal Absensi Siswa",
+  "description": "Aplikasi Web Absensi Siswa Interactive menggunakan Google Apps Script dan Vanilla Tailwind",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
