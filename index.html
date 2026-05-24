@@ -63,12 +63,15 @@
         }
     </style>
 </head>
-<body class="bg-[#f0f4f8] text-[#1a202c] min-h-screen flex items-center justify-center p-4">
+<body class="bg-[#f0f4f8] text-[#1a202c] min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
-    <div class="max-w-md w-full bg-white rounded-[1rem] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] overflow-hidden">
+    <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch my-auto">
+        
+        <!-- Kolom Kiri: Form Absensi -->
+        <div class="w-full bg-white rounded-[1rem] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col">
         
         <!-- Header Section -->
         <div class="bg-[#1e40af] p-6 text-white text-center relative overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
@@ -192,6 +195,37 @@
             <p class="text-xs text-slate-400 font-medium">&copy; <span id="current-year"></span> Sistem Digitalisasi Sekolah</p>
         </div>
     </div>
+    <!-- End Kolom Kiri -->
+    
+    <!-- Kolom Kanan: Hasil Spreadsheet -->
+    <div class="w-full bg-white rounded-[1rem] shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col min-h-[500px] lg:min-h-0">
+        <!-- Header -->
+        <div class="bg-[#1e40af] p-5 sm:p-6 text-white text-center sm:text-left flex flex-col sm:flex-row items-center justify-between shadow-[0_2px_4px_rgba(0,0,0,0.1)] z-10 shrink-0">
+            <div>
+                <h2 class="text-[1.125rem] font-bold tracking-tight flex items-center justify-center sm:justify-start">
+                    <i class="fa-solid fa-table-list mr-2 opacity-80"></i>
+                    Data Kehadiran Real-time
+                </h2>
+                <p class="text-blue-100 text-xs mt-1">Sinkronisasi langsung dari Google Sheets</p>
+            </div>
+            <div class="mt-3 sm:mt-0 bg-white/20 backdrop-blur px-3 py-1.5 rounded-full text-xs font-medium border border-white/10 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                LIVE
+            </div>
+        </div>
+        
+        <!-- Iframe Container -->
+        <div class="flex-1 w-full bg-white overflow-hidden relative">
+            <iframe 
+                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSreTVBXmlEIszErFjSlW2kRw-2yW_aCz8RWi1zpVkT1Ck5WgfyjSHyXJqxPntYAzAMcon_dg3Jc4Xs/pubhtml?gid=1894150284&amp;single=true&amp;widget=true&amp;headers=false"
+                class="absolute inset-0 w-full h-full border-0"
+                title="Data Kehadiran Siswa"
+            ></iframe>
+        </div>
+    </div>
+    <!-- End Kolom Kanan -->
+    
+</div>
 
     <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
